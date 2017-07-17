@@ -1,0 +1,112 @@
+{% extends "layout.twig" %}
+
+
+{% block style %}
+    <link rel="stylesheet" href="/assets/css/jquery_ui.css">
+{%  endblock %}
+
+
+{% block body %}
+    <h1>{{ pages.titre_pages }}</h1>
+    <ul id="sortable">
+        <button id="saveAll">Sauvegarder</button>
+        {% for label in labels %}
+            <li class="ui-state-default" position="{{ label.position_label }}" id="{{ label.id_label }}">
+                <span class="delete">Delete</span>
+                <div class="form-group">
+                    <label for="exampleInputPassword1">{{  label.titre_label }}</label>
+                    <input type="{{  label.type_label }}" class="form-control" id="exampleInputPassword1" placeholder="{{  label.titre_label }}">
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <form action="POST" id="addLabel">
+        <input type="text" id="namefield">
+        <input type="submit" id="add">
+    </form>
+{% endblock %}
+
+{% block js %}
+    <script src="/assets/js/jquery.js"></script>
+    <script src="/assets/js/jquery_ui.js"></script>
+    <script>
+        $( function() {
+
+            $(".delete").on('click', function(){
+                var parent = $(this).parents('.ui-state-default')
+
+                $.ajax({
+                    dataType: "text",
+                    method: "POST",
+                    url: "/admin/deletePositionLabel",
+                    data: { id_label : parent.attr('id')}
+                }).done(function(data) {
+                    giveID();
+                    parent.remove();
+                });
+            });
+
+
+            $("#addLabel").submit(function(e){
+                e.preventDefault()
+                var name = $('#namefield').val();
+
+                $.ajax({
+                    dataType: "json",
+                    method: "POST",
+                    url: "/admin/addPositionLabel",
+                    data: { name : name, id_page : {{ pages.id_pages }} }
+                }).done(function(data) {
+                    $("#sortable").append('<li class="ui-state-default" position="' + data.position_label + '" id="' + data.id_label + '">' + data.titre_label + '</li>')
+                });
+
+            });
+
+            $( "#sortable" ).sortable({
+                placeholder: "ui-state-highlight",
+                update: function ($item, position) {
+                    giveID();
+                }
+            });
+
+            $('#saveAll').on('click', function(){
+                var elements = {};
+                var $this = $(this);
+
+                $('.ui-state-default').each(function(){
+                    var val = $(this).find('input').val();
+                    elements[$(this).attr('id')] = val;
+                });
+
+
+                console.log(elements);
+                var JSONelements = JSON.stringify(elements)
+                $.ajax({
+                    method: "POST",
+                    url: "/admin/saveValueLabel",
+                    data: { data : JSONelements}
+                })
+            })
+
+
+            function giveID(){
+                var i = 1;
+                var elements = {};
+                $('.ui-state-default').each(function () {
+                    $(this).attr('position', i);
+                    elements[$(this).attr('id')] = i;
+                    i++;
+                })
+                var JSONelements = JSON.stringify(elements)
+                $.ajax({
+                    method: "POST",
+                    url: "/admin/setPositionLabel",
+                data: { data : JSONelements}
+                })
+            }
+
+
+        } );
+    </script>
+{%  endblock %}

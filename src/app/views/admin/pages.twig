@@ -1,0 +1,10 @@
+{% extends "layout.twig" %}
+
+{% block body %}
+    <h1>User List</h1>
+    <ul>
+        {% for page in pages %}
+            <li><a href="{{ path_for('admin.showpage', {'slug' : page.slug_page}) }}">{{ page.nom_pages }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}
